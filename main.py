@@ -79,18 +79,28 @@ class VideoForwarderBot:
             logger.info("✓ Logged in successfully using Session String")
             
             # FIX: Fetch the entities to populate the session cache
+            # Try multiple methods to ensure entities are loaded
             try:
-                source_entity = await self.client.get_entity(SOURCE_CHANNEL)
-                dest_entity = await self.client.get_entity(DEST_CHANNEL)
+                # Method 1: Direct get_entity
+                logger.info("Fetching source channel...")
+                source_entity = await self.client.get_entity(int(SOURCE_CHANNEL))
                 logger.info(f"✓ Successfully loaded source: {source_entity.title}")
+                
+                logger.info("Fetching destination channel...")
+                dest_entity = await self.client.get_entity(int(DEST_CHANNEL))
                 logger.info(f"✓ Successfully loaded destination: {dest_entity.title}")
+                
+                # Method 2: Ensure they're in the session by getting input entities
+                await self.client.get_input_entity(int(SOURCE_CHANNEL))
+                await self.client.get_input_entity(int(DEST_CHANNEL))
+                
             except Exception as e:
                 logger.error(f"Failed to load channel entities: {e}")
                 logger.error("Make sure your account has access to both channels and the IDs are correct")
                 sys.exit(1)
             
             # Register handlers (now the entities are cached)
-            self.client.add_event_handler(self.handle_message, events.NewMessage(chats=SOURCE_CHANNEL))
+            self.client.add_event_handler(self.handle_message, events.NewMessage(chats=int(SOURCE_CHANNEL)))
             logger.info(f"✓ Monitoring source: {SOURCE_CHANNEL}")
             
             # Keep running
