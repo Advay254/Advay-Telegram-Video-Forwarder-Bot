@@ -23,10 +23,10 @@ from telethon.tl.types import MessageMediaDocument
 
 API_ID = os.getenv('TELEGRAM_API_ID')
 API_HASH = os.getenv('TELEGRAM_API_HASH')
-SESSION_STRING = os.getenv('SESSION_STRING') # <--- NEW: Your session token
+SESSION_STRING = os.getenv('SESSION_STRING')
 SOURCE_CHANNEL = os.getenv('SOURCE_CHANNEL')
 DEST_CHANNEL = os.getenv('DEST_CHANNEL')
-PORT = int(os.getenv('PORT', 8080)) # Required for Render
+PORT = int(os.getenv('PORT', 8080))
 LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
 
 # ============================================================================
@@ -78,9 +78,20 @@ class VideoForwarderBot:
             
             logger.info("✓ Logged in successfully using Session String")
             
-            # Register handlers
+            # FIX: Fetch the entities to populate the session cache
+            try:
+                source_entity = await self.client.get_entity(SOURCE_CHANNEL)
+                dest_entity = await self.client.get_entity(DEST_CHANNEL)
+                logger.info(f"✓ Successfully loaded source: {source_entity.title}")
+                logger.info(f"✓ Successfully loaded destination: {dest_entity.title}")
+            except Exception as e:
+                logger.error(f"Failed to load channel entities: {e}")
+                logger.error("Make sure your account has access to both channels and the IDs are correct")
+                sys.exit(1)
+            
+            # Register handlers (now the entities are cached)
             self.client.add_event_handler(self.handle_message, events.NewMessage(chats=SOURCE_CHANNEL))
-            logger.info(f"Monitoring source: {SOURCE_CHANNEL}")
+            logger.info(f"✓ Monitoring source: {SOURCE_CHANNEL}")
             
             # Keep running
             await self.client.run_until_disconnected()
