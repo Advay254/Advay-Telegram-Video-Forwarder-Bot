@@ -1,316 +1,314 @@
-# Telegram Video Forwarder Bot - Production Deployment Guide
+# Telegram Video Forwarder Bot
 
-## Overview
-Production-ready Python bot that automatically forwards videos from a source Telegram channel to your destination channel. Built with comprehensive error handling, retry logic, and 24/7 operation in mind.
+A lightweight, reliable Telegram bot that automatically forwards videos from one channel to another. Built with Telethon and optimized for deployment on Render.
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow?style=for-the-badge&logo=buy-me-a-coffee)](https://www.buymeacoffee.com/Advay254)
+[![GitHub](https://img.shields.io/badge/GitHub-Advay254-181717?style=for-the-badge&logo=github)](https://github.com/Advay254)
+[![Telegram](https://img.shields.io/badge/Telegram-@AdvayGlimmer-26A5E4?style=for-the-badge&logo=telegram)](https://t.me/AdvayGlimmer)
 
 ## Features
 
-✅ **Automatic Video Detection & Forwarding**
-- Monitors source channel in real-time
-- Forwards only videos (ignores other media types)
-- Server-side forwarding (no downloading/re-uploading)
+✨ **Automatic Video Detection** - Monitors source channel for new video posts  
+🚀 **Instant Forwarding** - Forwards videos to destination channel in real-time  
+🛡️ **Reliable & Stable** - Built-in error handling and auto-reconnection  
+☁️ **Cloud-Ready** - Optimized for Render deployment with web server integration  
+🔒 **Secure** - Uses session strings for authentication (no phone number needed)  
+📱 **Termux Compatible** - Includes scripts for mobile setup
 
-✅ **Production-Grade Error Handling**
-- Automatic retry with exponential backoff
-- Flood wait protection (respects Telegram rate limits)
-- Slow mode detection and handling
-- Connection resilience with auto-reconnect
-- Comprehensive logging
+## How It Works
 
-✅ **Security & Best Practices**
-- All credentials via environment variables
-- Session file for persistent authentication
-- 2FA support
-- Graceful shutdown on interrupts
+```
+Source Channel → Bot Detection → Automatic Forward → Destination Channel
+```
 
-✅ **Monitoring & Statistics**
-- Real-time logging to console and file
-- Daily rotating log files
-- Success/error counters
-- Uptime tracking
-
----
+The bot monitors your source channel and instantly forwards any video content to your destination channel, maintaining the original quality and metadata.
 
 ## Prerequisites
 
-1. **Telegram API Credentials**
-   - Go to https://my.telegram.org
-   - Log in with your phone number
-   - Click "API Development Tools"
-   - Create a new application
-   - Save your `api_id` and `api_hash`
+- Python 3.11+
+- Telegram API credentials (API ID & API Hash)
+- A Telegram account with access to both channels
+- Render account (or any hosting platform)
 
-2. **Channel Access**
-   - You must be a member of the source channel
-   - You must be able to post in the destination channel (admin or your own channel)
+## Quick Start
 
-3. **Python 3.8+**
-   - Required for async/await features
+### 1. Get Telegram API Credentials
 
----
+1. Visit [my.telegram.org](https://my.telegram.org)
+2. Log in with your phone number
+3. Go to "API Development Tools"
+4. Create a new application
+5. Save your `API_ID` and `API_HASH`
 
-## Environment Variables
+### 2. Generate Session String
 
-### Required Variables
+#### On Termux (Android):
 
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `TELEGRAM_API_ID` | Your API ID from my.telegram.org | `12345678` |
-| `TELEGRAM_API_HASH` | Your API hash from my.telegram.org | `abcdef1234567890abcdef1234567890` |
-| `TELEGRAM_PHONE_NUMBER` | Your phone number in international format | `+1234567890` |
-| `SOURCE_CHANNEL` | Channel to monitor (username or ID) | `educationalchannel` or `-1001234567890` |
-| `DEST_CHANNEL` | Your destination channel (username or ID) | `mychannel` or `-1009876543210` |
+```bash
+# Install required packages
+pkg install python -y
+pip install telethon
 
-### Optional Variables
+# Copy and paste this entire block into Termux:
+cat > generate_session.py << 'EOF'
+#!/usr/bin/env python3
+import asyncio
+from telethon import TelegramClient
+from telethon.sessions import StringSession
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `TELEGRAM_2FA_PASSWORD` | Your 2FA password if enabled | `None` |
-| `SESSION_NAME` | Session file name | `video_forwarder_session` |
-| `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR) | `INFO` |
-| `MAX_RETRIES` | Maximum retry attempts for failed operations | `3` |
-| `RETRY_DELAY` | Initial delay between retries (seconds) | `5` |
+API_ID = '20851302'  # Replace with your API_ID
+API_HASH = '4a0b97964f941eb4cc19b05fd026885e'  # Replace with your API_HASH
 
----
+async def main():
+    print("=== SESSION STRING GENERATOR ===\n")
+    
+    async with TelegramClient(StringSession(), API_ID, API_HASH) as client:
+        print("Please log in...")
+        await client.start()
+        
+        session_string = client.session.save()
+        
+        print("\n" + "="*70)
+        print("SUCCESS! Here is your SESSION_STRING:")
+        print("="*70)
+        print(session_string)
+        print("="*70)
+        print("\nCopy this string and save it safely!")
 
-## Deployment on Pella.app
+if __name__ == "__main__":
+    asyncio.run(main())
+EOF
 
-### Step 1: Prepare Your Files
-
-1. Upload these files to your Git repository:
-   - `telegram_video_forwarder.py`
-   - `requirements.txt`
-   - `README.md` (this file)
-
-### Step 2: Deploy on Pella
-
-1. Sign up at https://www.pella.app/
-2. Create a new application
-3. Select "Python" as runtime
-4. Connect your Git repository
-5. Set the start command: `python telegram_video_forwarder.py`
-
-### Step 3: Configure Environment Variables
-
-In Pella dashboard, add these environment variables:
-
-```
-TELEGRAM_API_ID=12345678
-TELEGRAM_API_HASH=your_api_hash_here
-TELEGRAM_PHONE_NUMBER=+1234567890
-SOURCE_CHANNEL=source_channel_username
-DEST_CHANNEL=your_channel_username
+# Run the script
+python generate_session.py
 ```
 
-**Optional (if you have 2FA):**
+#### On Desktop:
+
+Run this script locally to generate your session string:
+
+```bash
+pip install telethon
+python generate_session.py
 ```
-TELEGRAM_2FA_PASSWORD=your_2fa_password
+
+Enter your phone number when prompted and save the generated session string.
+
+### 3. Get Channel IDs
+
+#### On Termux (Android):
+
+```bash
+# Copy and paste this entire block into Termux:
+cat > list_channels.py << 'EOF'
+#!/usr/bin/env python3
+import asyncio
+from telethon import TelegramClient
+from telethon.sessions import StringSession
+
+API_ID = '20851302'  # Replace with your API_ID
+API_HASH = '4a0b97964f941eb4cc19b05fd026885e'  # Replace with your API_HASH
+SESSION_STRING = 'YOUR_SESSION_STRING_HERE'  # Paste your session string
+
+async def main():
+    print("Connecting to Telegram...")
+    client = TelegramClient(StringSession(SESSION_STRING), int(API_ID), int(API_HASH))
+    
+    try:
+        await client.start()
+        print("✓ Connected!\n")
+        print("=" * 70)
+        print("YOUR CHANNELS AND GROUPS")
+        print("=" * 70)
+        
+        count = 0
+        async for dialog in client.iter_dialogs():
+            if dialog.is_channel or dialog.is_group:
+                count += 1
+                print(f"\n#{count}")
+                print(f"Name: {dialog.name}")
+                print(f"ID: {dialog.id}")
+                
+                if hasattr(dialog.entity, 'username') and dialog.entity.username:
+                    print(f"Username: @{dialog.entity.username}")
+                else:
+                    print(f"Username: (Private)")
+                
+                print("-" * 70)
+        
+        print(f"\n✓ Found {count} channels/groups total")
+        
+    except Exception as e:
+        print(f"\n✗ Error: {e}")
+    
+    finally:
+        await client.disconnect()
+
+if __name__ == "__main__":
+    asyncio.run(main())
+EOF
+
+# Run the script
+python list_channels.py
 ```
 
-### Step 4: First-Time Authentication
+#### On Desktop:
 
-1. Deploy the application
-2. Check the logs in Pella dashboard
-3. On first run, you'll receive a verification code in your Telegram app
-4. The bot will prompt for it - check Pella logs for instructions
-5. Enter the code when prompted
-6. A session file will be created and authentication will persist
+Use the included `list_channels.py` script to find your channel IDs:
 
-**Note:** After first authentication, the session is saved and you won't need to authenticate again unless you delete the session file or revoke access.
+```bash
+python list_channels.py
+```
 
-### Step 5: Monitor Operation
+Copy the numeric IDs for your source and destination channels.
 
-- Check Pella logs to confirm bot is running
-- Send a test video to the source channel
-- Verify it forwards to your destination channel
-- Monitor the logs for any errors
+### 4. Deploy to Render
 
----
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy)
 
-## Local Testing (Optional)
+**Environment Variables:**
+```
+TELEGRAM_API_ID=your_api_id
+TELEGRAM_API_HASH=your_api_hash
+SESSION_STRING=your_session_string
+SOURCE_CHANNEL=-1001234567890
+DEST_CHANNEL=-1009876543210
+PORT=10000
+```
 
-Before deploying to Pella, you can test locally:
+## Local Development
 
-### 1. Install Dependencies
+1. **Clone the repository:**
+```bash
+git clone https://github.com/yourusername/telegram-video-forwarder.git
+cd telegram-video-forwarder
+```
+
+2. **Install dependencies:**
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. Set Environment Variables
-
-**Linux/Mac:**
+3. **Set environment variables:**
 ```bash
-export TELEGRAM_API_ID="12345678"
+export TELEGRAM_API_ID="your_api_id"
 export TELEGRAM_API_HASH="your_api_hash"
-export TELEGRAM_PHONE_NUMBER="+1234567890"
-export SOURCE_CHANNEL="source_channel"
-export DEST_CHANNEL="your_channel"
+export SESSION_STRING="your_session_string"
+export SOURCE_CHANNEL="-1001234567890"
+export DEST_CHANNEL="-1009876543210"
 ```
 
-**Windows (PowerShell):**
-```powershell
-$env:TELEGRAM_API_ID="12345678"
-$env:TELEGRAM_API_HASH="your_api_hash"
-$env:TELEGRAM_PHONE_NUMBER="+1234567890"
-$env:SOURCE_CHANNEL="source_channel"
-$env:DEST_CHANNEL="your_channel"
-```
-
-### 3. Run the Bot
+4. **Run the bot:**
 ```bash
-python telegram_video_forwarder.py
+python main.py
 ```
 
-### 4. First Run Authentication
-- You'll receive a code in your Telegram app
-- Enter it when prompted
-- If you have 2FA, enter your password
-- Session will be saved in `video_forwarder_session.session`
+## Configuration
 
----
+### Environment Variables
 
-## Channel ID vs Username
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `TELEGRAM_API_ID` | Your Telegram API ID | ✅ |
+| `TELEGRAM_API_HASH` | Your Telegram API Hash | ✅ |
+| `SESSION_STRING` | Generated session string | ✅ |
+| `SOURCE_CHANNEL` | Channel ID to monitor | ✅ |
+| `DEST_CHANNEL` | Channel ID to forward to | ✅ |
+| `PORT` | Web server port (default: 8080) | ❌ |
 
-You can use either format for `SOURCE_CHANNEL` and `DEST_CHANNEL`:
+### Channel ID Format
 
-**Username format:** (for public channels)
-```
-educationalchannel  # No @ symbol needed
-```
-
-**ID format:** (works for both public and private)
-```
--1001234567890
-```
-
-### How to Get Channel ID
-
-1. Forward a message from the channel to @JsonDumpBot
-2. Look for `"id"` in the response
-3. For channels, the ID format is: `-100` + channel_id
-
----
+Channel IDs should be in numeric format:
+- **Correct:** `-1001234567890`
+- **Incorrect:** `@channelname` or `channelname`
 
 ## Troubleshooting
 
-### "Missing required environment variables"
-- Ensure all required env vars are set in Pella dashboard
-- Check for typos in variable names (they're case-sensitive)
+### "Cannot find any entity corresponding to..."
 
-### "SessionPasswordNeededError"
-- Your account has 2FA enabled
-- Set the `TELEGRAM_2FA_PASSWORD` environment variable
+**Solution:** Ensure your account is a member of both channels and you're using the correct numeric channel IDs.
 
-### "Cannot access one of the channels"
-- Verify you're a member of the source channel
-- Verify you can post in the destination channel
-- Check channel username/ID is correct
+### Bot disconnects frequently
 
-### "No permission to write in destination channel"
-- Make sure you're an admin or owner of the destination channel
-- Verify the channel isn't restricted
-
-### "Rate limited" / "FloodWaitError"
-- Normal behavior - bot will automatically wait and retry
-- Telegram limits how fast you can forward messages
-- The bot handles this automatically
+**Solution:** Regenerate your session string and update the environment variable.
 
 ### Videos not forwarding
-- Check logs for errors
-- Verify the source message actually contains a video
-- Some media might be sent as documents - bot handles both
 
-### Bot stops after some time
-- Check Pella logs for errors
-- Verify your Pella account is active
-- Check if session was invalidated (re-deploy to re-authenticate)
+**Checklist:**
+- ✅ Bot account is a member of both channels
+- ✅ Source channel ID is correct
+- ✅ Destination channel allows the bot to post
+- ✅ Session string is valid and not expired
 
----
-
-## File Structure
+## Architecture
 
 ```
-.
-├── telegram_video_forwarder.py   # Main bot script
-├── requirements.txt               # Python dependencies
-├── README.md                      # This file
-├── logs/                          # Created automatically
-│   └── forwarder_YYYYMMDD.log    # Daily log files
-└── *.session                      # Session file (auto-created, keep safe)
+┌─────────────────┐
+│  Source Channel │
+└────────┬────────┘
+         │ New Video
+         ↓
+┌─────────────────┐
+│   Telethon Bot  │ ← Event Handler
+└────────┬────────┘
+         │ Forward
+         ↓
+┌─────────────────┐
+│  Dest Channel   │
+└─────────────────┘
 ```
 
----
+## Tech Stack
 
-## Security Notes
+- **[Telethon](https://docs.telethon.dev/)** - Telegram client library
+- **[aiohttp](https://docs.aiohttp.org/)** - Web server for health checks
+- **Python 3.13** - Runtime environment
+- **Render** - Deployment platform
 
-1. **Never commit your session file to Git** - add `*.session` to `.gitignore`
-2. **Keep API credentials secret** - only store in environment variables
-3. **Don't share session files** - they provide full access to your account
-4. **Revoke access** if compromised via Telegram Settings → Privacy → Active Sessions
+## Security
 
----
+⚠️ **Important Security Notes:**
 
-## Monitoring
+- Never commit your `.env` file or expose credentials
+- Session strings have the same access as your account - keep them secure
+- Rotate session strings periodically
+- Use environment variables for all sensitive data
 
-### Check Bot Status
-- View Pella dashboard logs in real-time
-- Look for "Bot is now running and monitoring for videos..."
+## Contributing
 
-### Success Indicators
-```
-✓ Source channel verified: Channel Name
-✓ Destination channel verified: Your Channel
-Bot is now running and monitoring for videos...
-✓ Video forwarded successfully (Total: 1, Errors: 0)
-```
+Contributions are welcome! Please follow these steps:
 
-### Error Indicators
-- Any ERROR level logs
-- Increasing error counter
-- Connection failures (will auto-retry)
-
----
-
-## Performance
-
-- **Memory usage:** ~50-100MB (minimal)
-- **CPU usage:** Near zero when idle
-- **Network:** Only during forwarding (server-side operation)
-- **Latency:** Forwards appear within 1-2 seconds of source post
-
----
-
-## Limitations
-
-1. **Telegram Rate Limits**
-   - ~20-30 messages per minute (auto-handled by bot)
-   - Bot will wait automatically when rate limited
-
-2. **Pella Free Tier**
-   - 100MB RAM (sufficient for this bot)
-   - 0.1 CPU (sufficient for this bot)
-   - Always-on (perfect for 24/7 monitoring)
-
-3. **Forwarding Tag**
-   - Videos will show "Forwarded from [source]"
-   - To remove this, you'd need to download/re-upload (not recommended for large videos)
-
----
-
-## Support
-
-If you encounter issues:
-
-1. Check the troubleshooting section above
-2. Review Pella logs for specific error messages
-3. Verify all environment variables are set correctly
-4. Test with a small video first
-5. Ensure you have access to both channels
-
----
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
-This is production-ready code. Use responsibly and in compliance with Telegram's Terms of Service.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-**Important:** Don't use this for spam, mass forwarding, or violating channel rules. Only forward content you have permission to redistribute.
+## Support
+
+- 📫 **Issues:** [GitHub Issues](https://github.com/Advay254/Advay-Telegram-Video-Forwarder-Bot/issues)
+- 📖 **Documentation:** [Telethon Docs](https://docs.telethon.dev/)
+- 💬 **Telegram:** [@AdvayGlimmer](https://t.me/AdvayGlimmer)
+- ☕ **Buy Me a Coffee:** [Support this project](https://www.buymeacoffee.com/Advay254)
+
+## Acknowledgments
+
+- Built with [Telethon](https://github.com/LonamiWebs/Telethon)
+- Deployed on [Render](https://render.com)
+- Inspired by the Telegram automation community
+
+---
+
+<div align="center">
+
+**⭐ Star this repo if you find it useful!**
+
+[![Buy Me A Coffee](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20coffee&emoji=☕&slug=Advay254&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/Advay254)
+
+Made with ❤️ by [Advay](https://github.com/Advay254)
+
+</div>
